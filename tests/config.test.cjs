@@ -83,7 +83,7 @@ describe('config-ensure-section command', () => {
     fs.mkdirSync(gsdDir, { recursive: true });
     fs.writeFileSync(path.join(gsdDir, 'brave_api_key'), 'test-key', 'utf-8');
 
-    const result = runGsdTools('config-ensure-section', tmpDir);
+    const result = runGsdTools('config-ensure-section', tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
@@ -100,7 +100,7 @@ describe('config-ensure-section command', () => {
       commit_docs: false,
     }), 'utf-8');
 
-    const result = runGsdTools('config-ensure-section', tmpDir);
+    const result = runGsdTools('config-ensure-section', tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
@@ -119,7 +119,7 @@ describe('config-ensure-section command', () => {
       workflow: { research: false },
     }), 'utf-8');
 
-    const result = runGsdTools('config-ensure-section', tmpDir);
+    const result = runGsdTools('config-ensure-section', tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
@@ -330,7 +330,7 @@ describe('config-new-project command', () => {
       model_profile: 'balanced',
       workflow: { research: true, plan_check: true, verifier: true, nyquist_validation: true },
     });
-    const result = runGsdTools(['config-new-project', choices], tmpDir);
+    const result = runGsdTools(['config-new-project', choices], tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
@@ -378,7 +378,7 @@ describe('config-new-project command', () => {
       model_profile: 'quality',
       workflow: { research: false, plan_check: false, verifier: true, nyquist_validation: false },
     });
-    const result = runGsdTools(['config-new-project', choices], tmpDir);
+    const result = runGsdTools(['config-new-project', choices], tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
@@ -397,7 +397,7 @@ describe('config-new-project command', () => {
   });
 
   test('works with empty choices — all defaults materialized', () => {
-    const result = runGsdTools(['config-new-project', '{}'], tmpDir);
+    const result = runGsdTools(['config-new-project', '{}'], tmpDir, { HOME: tmpDir });
     assert.ok(result.success, `Command failed: ${result.error}`);
 
     const config = readConfig(tmpDir);
