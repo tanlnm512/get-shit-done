@@ -69,16 +69,35 @@ Track which phases have which artifacts.
 
 ## Step 4: Gather Git Statistics
 
+Try each method in order until one succeeds:
+
+**Method 1 — Tagged milestone** (check first):
 ```bash
-# If milestone is tagged
+git tag -l "v${VERSION}" | head -1
+```
+If the tag exists:
+```bash
 git log v${VERSION} --oneline | wc -l
 git diff --stat $(git log --format=%H --reverse v${VERSION} | head -1)..v${VERSION}
-
-# If not tagged, use date range from STATE.md or earliest phase commit
-git log --oneline --since="<milestone_start>" | wc -l
 ```
 
-Extract:
+**Method 2 — STATE.md date range** (if no tag):
+Read STATE.md and extract the `started_at` or earliest session date. Use it as the `--since` boundary:
+```bash
+git log --oneline --since="<started_at_date>" | wc -l
+```
+
+**Method 3 — Earliest phase commit** (if STATE.md has no date):
+Find the earliest `.planning/phases/` commit:
+```bash
+git log --oneline --diff-filter=A -- ".planning/phases/" | tail -1
+```
+Use that commit's date as the start boundary.
+
+**Method 4 — Skip stats** (if none of the above work):
+Report "Git statistics unavailable — no tag or date range could be determined." This is not an error — the summary continues without the Stats section.
+
+Extract (when available):
 - Total commits in milestone
 - Files changed, insertions, deletions
 - Timeline (start date → end date)

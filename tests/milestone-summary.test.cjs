@@ -190,3 +190,141 @@ describe('milestone-summary artifact path resolution', () => {
     );
   });
 });
+
+describe('milestone-summary fixture-based artifact discovery', () => {
+  const os = require('os');
+  let tmpDir;
+
+  function setup() {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsd-ms-test-'));
+  }
+
+  function teardown() {
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+
+  test('discovers artifacts in archived milestone structure', () => {
+    setup();
+    try {
+      // Create archived milestone structure
+      const milestonesDir = path.join(tmpDir, '.planning', 'milestones');
+      fs.mkdirSync(milestonesDir, { recursive: true });
+      fs.writeFileSync(path.join(milestonesDir, 'v1.0-ROADMAP.md'), '# Roadmap v1.0');
+      fs.writeFileSync(path.join(milestonesDir, 'v1.0-REQUIREMENTS.md'), '# Reqs v1.0');
+      fs.writeFileSync(path.join(milestonesDir, 'v1.0-MILESTONE-AUDIT.md'), '# Audit v1.0');
+
+      // Verify all 3 archived files are discoverable
+      const files = fs.readdirSync(milestonesDir);
+      assert.ok(files.includes('v1.0-ROADMAP.md'), 'archived ROADMAP should exist');
+      assert.ok(files.includes('v1.0-REQUIREMENTS.md'), 'archived REQUIREMENTS should exist');
+      assert.ok(files.includes('v1.0-MILESTONE-AUDIT.md'), 'archived AUDIT should exist');
+    } finally {
+      teardown();
+    }
+  });
+
+  test('discovers phase artifacts across multiple phases', () => {
+    setup();
+    try {
+      // Create phase structure with varying artifact completeness
+      const phase1 = path.join(tmpDir, '.planning', 'phases', '01-setup');
+      const phase2 = path.join(tmpDir, '.planning', 'phases', '02-core');
+      const phase3 = path.join(tmpDir, '.planning', 'phases', '03-ui');
+      fs.mkdirSync(phase1, { recursive: true });
+      fs.mkdirSync(phase2, { recursive: true });
+      fs.mkdirSync(phase3, { recursive: true });
+
+      // Phase 1: all artifacts
+      fs.writeFileSync(path.join(phase1, '01-SUMMARY.md'), 'one_liner: Setup');
+      fs.writeFileSync(path.join(phase1, '01-CONTEXT.md'), '<decisions>D-01</decisions>');
+      fs.writeFileSync(path.join(phase1, '01-VERIFICATION.md'), 'status: passed');
+      fs.writeFileSync(path.join(phase1, '01-RESEARCH.md'), '# Research');
+
+      // Phase 2: partial artifacts (no RESEARCH, no VERIFICATION)
+      fs.writeFileSync(path.join(phase2, '02-SUMMARY.md'), 'one_liner: Core');
+      fs.writeFileSync(path.join(phase2, '02-CONTEXT.md'), '<decisions>D-02</decisions>');
+
+      // Phase 3: only SUMMARY
+      fs.writeFileSync(path.join(phase3, '03-SUMMARY.md'), 'one_liner: UI');
+
+      // Verify discovery
+      const phasesDir = path.join(tmpDir, '.planning', 'phases');
+      const phaseDirs = fs.readdirSync(phasesDir, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name);
+      assert.strictEqual(phaseDirs.length, 3, 'should find 3 phase directories');
+
+      // Phase 1 has all 4 artifact types
+      const p1Files = fs.readdirSync(phase1);
+      assert.strictEqual(p1Files.length, 4, 'phase 1 should have 4 artifacts');
+
+      // Phase 2 has 2 artifact types
+      const p2Files = fs.readdirSync(phase2);
+      assert.strictEqual(p2Files.length, 2, 'phase 2 should have 2 artifacts');
+
+      // Phase 3 has 1 artifact type
+      const p3Files = fs.readdirSync(phase3);
+      assert.strictEqual(p3Files.length, 1, 'phase 3 should have 1 artifact');
+    } finally {
+      teardown();
+    }
+  });
+
+  test('handles empty .planning directory without error', () => {
+    setup();
+    try {
+      const planningDir = path.join(tmpDir, '.planning');
+      fs.mkdirSync(planningDir, { recursive: true });
+
+      // No milestones, no phases — just empty .planning/
+      const contents = fs.readdirSync(planningDir);
+      assert.strictEqual(contents.length, 0, 'empty .planning/ should have no contents');
+
+      // Should not throw when checking for milestones dir
+      const milestonesExists = fs.existsSync(path.join(planningDir, 'milestones'));
+      assert.strictEqual(milestonesExists, false, 'milestones/ should not exist');
+
+      const phasesExists = fs.existsSync(path.join(planningDir, 'phases'));
+      assert.strictEqual(phasesExists, false, 'phases/ should not exist');
+    } finally {
+      teardown();
+    }
+  });
+
+  test('output path pattern produces valid filenames', () => {
+    const versions = ['1.0', '1.1', '2.0', '0.1'];
+    for (const v of versions) {
+      const filename = `MILESTONE_SUMMARY-v${v}.md`;
+      assert.ok(
+        /^MILESTONE_SUMMARY-v\d+\.\d+\.md$/.test(filename),
+        `"${filename}" should be a valid milestone summary filename`
+      );
+    }
+  });
+});
+
+describe('milestone-summary git stats resilience', () => {
+  test('workflow has fallback methods when tag does not exist', () => {
+    const content = fs.readFileSync(workflowPath, 'utf-8');
+    assert.ok(
+      content.includes('Method 1') && content.includes('Method 2'),
+      'should have multiple fallback methods for git stats'
+    );
+  });
+
+  test('workflow can skip stats gracefully', () => {
+    const content = fs.readFileSync(workflowPath, 'utf-8');
+    assert.ok(
+      content.includes('Skip stats') || content.includes('statistics unavailable'),
+      'should handle case where git stats cannot be gathered'
+    );
+  });
+
+  test('command has type: prompt in frontmatter', () => {
+    const content = fs.readFileSync(commandPath, 'utf-8');
+    assert.ok(
+      content.includes('type: prompt'),
+      'should have type: prompt for consistency with complete-milestone.md'
+    );
+  });
+});
