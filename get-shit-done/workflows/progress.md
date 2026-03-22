@@ -228,6 +228,13 @@ Read its `<objective>` section.
 
 Check if `{phase_num}-CONTEXT.md` exists in phase directory.
 
+Check if current phase has UI indicators:
+
+```bash
+PHASE_SECTION=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap get-phase "${CURRENT_PHASE}" 2>/dev/null)
+PHASE_HAS_UI=$(echo "$PHASE_SECTION" | grep -qi "UI hint.*yes" && echo "true" || echo "false")
+```
+
 **If CONTEXT.md exists:**
 
 ```
@@ -245,7 +252,30 @@ Check if `{phase_num}-CONTEXT.md` exists in phase directory.
 ---
 ```
 
-**If CONTEXT.md does NOT exist:**
+**If CONTEXT.md does NOT exist AND phase has UI (`PHASE_HAS_UI` is `true`):**
+
+```
+---
+
+## ▶ Next Up
+
+**Phase {N}: {Name}** — {Goal from ROADMAP.md}
+
+`/gsd:discuss-phase {phase}` — gather context and clarify approach
+
+<sub>`/clear` first → fresh context window</sub>
+
+---
+
+**Also available:**
+- `/gsd:ui-phase {phase}` — generate UI design contract (recommended for frontend phases)
+- `/gsd:plan-phase {phase}` — skip discussion, plan directly
+- `/gsd:list-phase-assumptions {phase}` — see Claude's assumptions
+
+---
+```
+
+**If CONTEXT.md does NOT exist AND phase has no UI:**
 
 ```
 ---
@@ -343,6 +373,40 @@ State: "Current phase is {X}. Milestone has {N} phases (highest: {Y})."
 **Route C: Phase complete, more phases remain**
 
 Read ROADMAP.md to get the next phase's name and goal.
+
+Check if next phase has UI indicators:
+
+```bash
+NEXT_PHASE_SECTION=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap get-phase "$((Z+1))" 2>/dev/null)
+NEXT_HAS_UI=$(echo "$NEXT_PHASE_SECTION" | grep -qi "UI hint.*yes" && echo "true" || echo "false")
+```
+
+**If next phase has UI (`NEXT_HAS_UI` is `true`):**
+
+```
+---
+
+## ✓ Phase {Z} Complete
+
+## ▶ Next Up
+
+**Phase {Z+1}: {Name}** — {Goal from ROADMAP.md}
+
+`/gsd:discuss-phase {Z+1}` — gather context and clarify approach
+
+<sub>`/clear` first → fresh context window</sub>
+
+---
+
+**Also available:**
+- `/gsd:ui-phase {Z+1}` — generate UI design contract (recommended for frontend phases)
+- `/gsd:plan-phase {Z+1}` — skip discussion, plan directly
+- `/gsd:verify-work {Z}` — user acceptance test before continuing
+
+---
+```
+
+**If next phase has no UI:**
 
 ```
 ---
