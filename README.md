@@ -4,7 +4,7 @@
 
 **English** · [Português](README.pt-BR.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja-JP.md) · [한국어](README.ko-KR.md)
 
-**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode, Gemini CLI, Codex, Copilot, Cursor, Windsurf, and Antigravity.**
+**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode, Gemini CLI, Codex, Copilot, Cursor, Windsurf, Antigravity, and Augment.**
 
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
@@ -82,15 +82,14 @@ npx get-shit-done-cc@latest
 ```
 
 The installer prompts you to choose:
-1. **Runtime** — Claude Code, OpenCode, Gemini, Codex, Copilot, Cursor, Windsurf, Antigravity, or all (interactive multi-select — pick multiple runtimes in a single install session)
+1. **Runtime** — Claude Code, OpenCode, Gemini, Codex, Copilot, Cursor, Windsurf, Antigravity, Augment, or all (interactive multi-select — pick multiple runtimes in a single install session)
 2. **Location** — Global (all projects) or local (current project only)
 
 Verify with:
-- Claude Code / Gemini: `/gsd:help`
+- Claude Code / Gemini / Copilot / Antigravity: `/gsd:help`
 - OpenCode: `/gsd-help`
 - Codex: `$gsd-help`
-- Copilot: `/gsd:help`
-- Antigravity: `/gsd:help`
+- Augment: `/gsd-help`
 
 > [!NOTE]
 > Codex installation uses skills (`skills/gsd-*/SKILL.md`) rather than custom prompts.
