@@ -1488,7 +1488,7 @@ function checkAgentsInstalled() {
  * Users can override with model_overrides in config.json for custom/latest models.
  */
 const MODEL_ALIAS_MAP = {
-  'opus': 'claude-opus-4-6',
+  'opus': 'claude-opus-4-7',
   'sonnet': 'claude-sonnet-4-6',
   'haiku': 'claude-haiku-4-5',
 };
@@ -1506,11 +1506,9 @@ const MODEL_ALIAS_MAP = {
  * provider-specific IDs the runtime cannot accept.
  */
 const RUNTIME_PROFILE_MAP = {
-  claude: {
-    opus:   { model: 'claude-opus-4-6' },
-    sonnet: { model: 'claude-sonnet-4-6' },
-    haiku:  { model: 'claude-haiku-4-5' },
-  },
+  claude: Object.fromEntries(
+    Object.entries(MODEL_ALIAS_MAP).map(([tier, model]) => [tier, { model }])
+  ),
   codex: {
     opus:   { model: 'gpt-5.4',        reasoning_effort: 'xhigh' },
     sonnet: { model: 'gpt-5.3-codex',  reasoning_effort: 'medium' },
