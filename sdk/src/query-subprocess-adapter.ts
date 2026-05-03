@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import type { GSDToolsError } from './gsd-tools-error.js';
+import type { GSDToolsError } from './gsd-tools.js';
 
 export interface QuerySubprocessAdapterDeps {
   projectDir: string;
@@ -103,18 +103,6 @@ export class QuerySubprocessAdapter {
         (error, stdout, stderr) => {
           const stderrStr = stderr?.toString() ?? '';
           if (error) {
-            if (error.killed || (error as NodeJS.ErrnoException).code === 'ETIMEDOUT') {
-              reject(
-                this.deps.createToolsError(
-                  `gsd-tools timed out after ${this.deps.timeoutMs}ms: ${command} ${args.join(' ')}`,
-                  command,
-                  args,
-                  null,
-                  stderrStr,
-                ),
-              );
-              return;
-            }
             reject(
               this.deps.createToolsError(
                 `gsd-tools exited with code ${error.code ?? 'unknown'}: ${command} ${args.join(' ')}${stderrStr ? `\n${stderrStr}` : ''}`,

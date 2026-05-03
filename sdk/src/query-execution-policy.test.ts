@@ -1,12 +1,8 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { QueryExecutionPolicy } from './query-execution-policy.js';
 import { setTransportPolicy, clearTransportPolicy } from './gsd-transport-policy.js';
 
 describe('QueryExecutionPolicy', () => {
-  afterEach(() => {
-    clearTransportPolicy();
-  });
-
   it('applies transport policy to transport.run', async () => {
     const run = vi.fn().mockResolvedValue({ ok: true });
     const policy = new QueryExecutionPolicy({ run } as never);
@@ -27,5 +23,6 @@ describe('QueryExecutionPolicy', () => {
     const [, policyArg] = run.mock.calls[0];
     expect(policyArg).toEqual({ preferNative: true, allowFallbackToSubprocess: false });
 
+    clearTransportPolicy();
   });
 });
