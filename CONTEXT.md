@@ -104,3 +104,37 @@ Module policy that defines query-time behavior when `.planning/config.json` is a
 
 ### SDK-only verbs — golden-policy exemption required
 - Any `gsd-sdk query` verb implemented only in the SDK native registry (no `gsd-tools.cjs` mirror) must be added to `NO_CJS_SUBPROCESS_REASON` in `sdk/src/golden/golden-policy.ts`. Without this entry the golden-policy test fails, treating the verb as a missing implementation rather than an intentional SDK-only path.
+
+---
+
+## Recurring findings from ADR-0002 PR review (2026-05-05)
+
+### allowed-tools must include every tool the workflow uses
+When a command delegates to a workflow via `execution_context`, the command's `allowed-tools` must cover every tool the workflow calls — including `Write` for file creation. The thin wrapper pattern makes this easy to miss: the process steps live in the workflow, but the tool grant lives in the command frontmatter. Missing a tool silently fails at runtime.
+
+### User-supplied slug/path args always need sanitization before file path construction
+Any workflow step that takes user input (subcommand argument, `$ARGUMENTS`, or parsed remainder) and constructs a `.planning/…/{SLUG}.md` path must sanitize first: strip non-`[a-z0-9-]` chars, reject `..`/`/`/`\`, enforce max length. Document the sanitization inline at the step, not just in `<security_notes>`. Steps that say "(already sanitized)" must trace back to an explicit sanitization guard — not just a preceding describe block.
+
+### RESUME/fallback modes bypass sanitization guards written for primary modes
+CLOSE and STATUS modes that document "(already sanitized)" do not automatically cover RESUME or default modes. Each mode that constructs a file path from user input needs its own guard — don't assume sibling modes share state.
+
+### Shared helpers prevent lint/test disagreement
+When a lint script and a test suite both implement the same constant (`CANONICAL_TOOLS`) or parser (`parseFrontmatter`, `executionContextRefs`), they will silently diverge. Extract to a `scripts/*-helpers.cjs` module required by both. A tool added to the lint's allowlist but not the test's (or vice versa) causes one layer to pass while the other fails.
+
+### readFileSync outside test() crashes the runner before any test registers
+Module-level or suite-registration-time `readFileSync` throws as an unhandled exception if the file is absent, aborting the runner with no test output. Move reads inside `test()` callbacks so failures surface as named test failures.
+
+### Global regex with `g` flag carries `lastIndex` state between calls
+A `const RE = /pattern/g` shared across functions retains `lastIndex` after `.test()` or `.exec()`. Use a non-global pattern for boolean checks (`/pattern/.test(s)`) and create a new `RegExp(pattern, 'g')` per iteration when you need `exec()` loops. Forgetting `lastIndex = 0` resets causes intermittent false negatives.
+
+### ADR files need Status + Date headers
+Every `docs/adr/NNNN-*.md` file must open with `- **Status:** Accepted` (or Proposed/Deprecated) and `- **Date:** YYYY-MM-DD` immediately after the title. Without them the ADR is undatable and untriageable when the list grows.
+
+### Step names in workflow XML must use hyphens, not underscores
+All workflow file names use hyphens; `<step name="...">` attributes inside those files must match: `extract-learnings` not `extract_learnings`. Tests asserting `content.includes('<step name=')` should tighten to the exact hyphenated name so renames are caught.
+
+### INVENTORY-MANIFEST.json has two workflow lists — only families.workflows is canonical
+`docs/INVENTORY-MANIFEST.json` has `families.workflows` (canonical, read by tooling) and a stale top-level `workflows` key (introduced by a node update script that wrote to the wrong key). Always update `families.workflows`. Delete any top-level `workflows` key if it appears.
+
+### "Follow the X workflow" prose fragments are non-standard — use "Execute end-to-end."
+After stripping prose @-refs, some command `<process>` blocks retained bolded "**Follow the X workflow**" fragments. ADR-0002 standard is `Execute end-to-end.` for single-workflow commands. Routing commands with flag dispatch use `execute the X workflow end-to-end.` in routing bullets (no bold, no redundant path).
