@@ -55,7 +55,7 @@ export class GSDTransport {
     } else {
       const reason = this.subprocessReason(request, policy);
       onDecision?.({ dispatchMode: 'subprocess', reason });
-      if (!policy.allowFallbackToSubprocess) {
+      if (!policy.allowFallbackToSubprocess && reason === 'native_unregistered') {
         throw GSDToolsError.failure(
           `Subprocess fallback disabled: command '${request.registryCommand}' cannot run without native dispatch`,
           request.legacyCommand,
