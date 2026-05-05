@@ -13,7 +13,7 @@
 
 import type { InitNewProjectInfo, PhaseOpInfo, PhasePlanIndex, RoadmapAnalysis } from './types.js';
 import type { GSDEventStream } from './event-stream.js';
-import { toGSDToolsError } from './query-tools-error-mapper.js';
+import { toToolsErrorFromUnknown } from './query-tools-error-factory.js';
 import { GSDToolsError } from './gsd-tools-error.js';
 import { resolveQueryCommand, type QueryCommandResolution } from './query/query-command-resolution-strategy.js';
 import { QueryExecutionPolicy } from './query-execution-policy.js';
@@ -108,7 +108,7 @@ export class GSDTools {
   }
 
   private toToolsError(command: string, args: string[], err: unknown): GSDToolsError {
-    return toGSDToolsError(command, args, err);
+    return toToolsErrorFromUnknown(command, args, err);
   }
 
   private async dispatchNativeHotpath(
